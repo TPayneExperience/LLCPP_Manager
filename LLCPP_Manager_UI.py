@@ -8,12 +8,13 @@ class LLCPP_Manager_UI(QtGui.QWidget):
     def __init__(self):
         super(LLCPP_Manager_UI, self).__init__()
         adobe = os.environ['ADOBE_SUPPORT_FILES']
+        of = os.environ['OPEN_OFFICE_PATH']
         icons = QtGui.QFileIconProvider()
 
         self.ps_icon = os.path.join(adobe, r'com.adobe.ccx.start\images\products\product-rune-PHXS.png')
         self.pr_icon = os.path.join(adobe, r'com.adobe.ccx.start\images\products\product-rune-PPRO.png')
         self.ca_icon = os.path.join(adobe, r'PNG\SP_VideoColored_64x64_N_D.png')
-        self.of_icon = r'D:\Program Files (x86)\OpenOffice 4\program\logo.png'
+        self.of_icon = os.path.join(of, r'program\logo.png')
         self.tool_icon = os.path.join(adobe, r'PNG\SP_AddedByOthers_17x15_N.png')
         self.fo_icon = icons.icon(icons.Folder)
         self.fi_icon = icons.icon(icons.File)
