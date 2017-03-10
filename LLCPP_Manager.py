@@ -4,20 +4,20 @@ from re import findall
 from os import listdir, rename, makedirs
 from os.path import isdir, join, exists
 from shutil import copytree
-import re
+import re, os
 
 ##==================================================================
 class LLCPP_Manager:
     def __init__(self):
-        self.source = r"D:\TPX\_LLCPP\000_OTHER_STUFF\0000_TEMPLATE_IGNORE"
-        self.dest = r"D:\TPX\_LLCPP"
-        self.premiereEXE = r"C:\Program Files\Adobe\Adobe Premiere Pro CC 2015.3\Adobe Premiere Pro.exe"
-        self.writerEXE = r"D:\Program Files (x86)\OpenOffice 4\program\swriter.exe"
-        self.psEXE = r"C:\Program Files\Adobe\Adobe Photoshop CC 2015.5\Photoshop.exe"
-        self.github = 'D:\\Assets\\Programming\\GitHub\\'
-        self.sublime = r'D:\Program Files\Sublime Text 3\sublime_text.exe '
+        self.source = os.path.join(os.environ['LLCPP'], '000_OTHER_STUFF\\0000_TEMPLATE_IGNORE')
+        self.dest = os.environ['LLCPP']
+        self.premiereEXE = os.path.join(os.environ['ADOBE_PREMIERE'], 'Adobe Premiere Pro.exe')
+        self.writerEXE = os.path.join(os.environ['OPEN_OFFICE'], 'program\\swriter.exe')
+        self.psEXE = os.path.join(os.environ['ADOBE_PHOTOSHOP'], 'Photoshop.exe')
+        self.github = os.environ['GITHUB']
+        self.sublime = os.path.join(os.environ['SUBLIME'], 'sublime_text.exe')
         
-        self.sourceFootageFolder = 'D:\\TPX\\Captures\\'
+        self.sourceFootageFolder = os.environ['CAPTURE']
 
         self.folderName = ''
 

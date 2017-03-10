@@ -7,15 +7,15 @@ import LLCPP_Clean_Github as CG
 class LLCPP_Manager_UI(QtGui.QWidget):
     def __init__(self):
         super(LLCPP_Manager_UI, self).__init__()
-        adobe = os.environ['ADOBE_SUPPORT_FILES']
-        of = os.environ['OPEN_OFFICE_PATH']
+        adobe = os.environ['ADOBE_AFTER_EFFECTS']
+        of = os.environ['OPEN_OFFICE']
         icons = QtGui.QFileIconProvider()
 
-        self.ps_icon = os.path.join(adobe, r'com.adobe.ccx.start\images\products\product-rune-PHXS.png')
-        self.pr_icon = os.path.join(adobe, r'com.adobe.ccx.start\images\products\product-rune-PPRO.png')
-        self.ca_icon = os.path.join(adobe, r'PNG\SP_VideoColored_64x64_N_D.png')
+        self.ps_icon = os.path.join(adobe, r'Support Files\com.adobe.ccx.start\images\products\product-rune-PHXS.png')
+        self.pr_icon = os.path.join(adobe, r'Support Files\com.adobe.ccx.start\images\products\product-rune-PPRO.png')
+        self.ca_icon = os.path.join(adobe, r'Support Files\PNG\SP_VideoColored_64x64_N_D.png')
         self.of_icon = os.path.join(of, r'program\logo.png')
-        self.tool_icon = os.path.join(adobe, r'PNG\SP_AddedByOthers_17x15_N.png')
+        self.tool_icon = os.path.join(adobe, r'Support Files\PNG\SP_AddedByOthers_17x15_N.png')
         self.fo_icon = icons.icon(icons.Folder)
         self.fi_icon = icons.icon(icons.File)
         self.trash_icon = icons.icon(icons.Trashcan)
