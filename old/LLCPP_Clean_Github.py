@@ -16,11 +16,9 @@ def _kill_Non_Cpp_Files(exerciseDir):
 				remove(a)
 			if isdir(a):
 				shutil.rmtree(a)
-def clean_Github():
-	p = r'D:\Assets\Programming\GitHub'
-
-	for f in listdir(p):
-		debug = join(join(p, f), 'Debug_Exercises')
+def clean_Github(path):
+	for f in listdir(path):
+		debug = join(path, 'Debug_Exercises')
 		if not isdir(debug):
 			continue
 		for d in listdir(debug):

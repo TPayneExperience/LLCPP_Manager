@@ -1,15 +1,18 @@
-import sys, os
+
 from PySide import QtGui
+import sys, os
 import LLCPP_Manager as LM
-import LLCPP_Clean_Github as CG
 
 ##==================================================================
+
 class LLCPP_Manager_UI(QtGui.QWidget):
     def __init__(self):
         super(LLCPP_Manager_UI, self).__init__()
         adobe = os.environ['ADOBE_AFTER_EFFECTS']
         of = os.environ['OPEN_OFFICE']
         icons = QtGui.QFileIconProvider()
+        self.create_proj = 'Create New Proj...'
+        self.create_episode = 'Create New Episode...'
 
         self.ps_icon = os.path.join(adobe, r'Support Files\com.adobe.ccx.start\images\products\product-rune-PHXS.png')
         self.pr_icon = os.path.join(adobe, r'Support Files\com.adobe.ccx.start\images\products\product-rune-PPRO.png')
@@ -22,27 +25,42 @@ class LLCPP_Manager_UI(QtGui.QWidget):
         self.LMan = LM.LLCPP_Manager()
 
         self.Setup()
+        self.Populate_Proj_CB()
+        self.Populate_Episode_CB()
         self.Setup_Connections()
+
+    #======= SETUP UI =================================
 
     def Setup(self):
         v_layout = QtGui.QVBoxLayout()
         h_layout = QtGui.QHBoxLayout()
-        self.le = QtGui.QLineEdit(self)
-        self.le.setPlaceholderText('Place episode subject here!')
-        h_layout.addWidget(self.le)
+        h_layout.addWidget(self.Setup_Proj_GB())
+        h_layout.addWidget(self.Setup_Episode_GB())
 
-        self.create_proj_fold_btn = QtGui.QPushButton('  Create Proj Folders!  ', self)
-        h_layout.addWidget(self.create_proj_fold_btn)
-        
         v_layout.addLayout(h_layout)
-
         v_layout.addWidget(self.Setup_Btn_GB())
 
         self.setWindowIcon(QtGui.QIcon(self.tool_icon))
         self.setLayout(v_layout)
-        self.setWindowTitle("Badass LLC++ Tool")
+        self.setWindowTitle('Badass LLC++ Tool')
         self.resize(350, 10)
         self.show()
+
+    def Setup_Proj_GB(self):
+        g_box = QtGui.QGroupBox('Project')
+        h_layout = QtGui.QHBoxLayout()
+        self.proj_cb = QtGui.QComboBox()
+        h_layout.addWidget(self.proj_cb)
+        g_box.setLayout(h_layout)
+        return g_box
+
+    def Setup_Episode_GB(self):
+        g_box = QtGui.QGroupBox('Episode')
+        h_layout = QtGui.QHBoxLayout()
+        self.episode_cb = QtGui.QComboBox()
+        h_layout.addWidget(self.episode_cb)
+        g_box.setLayout(h_layout)
+        return g_box
 
     def Setup_Btn_GB(self):
         self.gb = QtGui.QGroupBox('Open Latest Files...', self)
@@ -81,7 +99,6 @@ class LLCPP_Manager_UI(QtGui.QWidget):
         return self.gb
 
     def Setup_Connections(self):
-        self.create_proj_fold_btn.clicked.connect(self.Create_Project_Folders)
         self.outline_btn.clicked.connect(self.Open_Outline_File)
         self.premiere_btn.clicked.connect(self.Open_Premiere_File)
         self.photoshop_btn.clicked.connect(self.Open_PS_File)
@@ -89,43 +106,74 @@ class LLCPP_Manager_UI(QtGui.QWidget):
         self.project_folder_btn.clicked.connect(self.Open_Project_Folder)
         self.exercises_btn.clicked.connect(self.Open_Cpp_Exercises)
         self.clean_github_btn.clicked.connect(self.Clean_Github)
-        
-    def Create_Project_Folders(self):
-        if QtGui.QMessageBox.question(self, 
-            "Are you Sure?", 
-            "Create folders?", 
-            QtGui.QMessageBox.Ok, 
-            QtGui.QMessageBox.Cancel) != 1024:
-            QtGui.QMessageBox.warning(self, "Cancelling", "Cancelling")
-            return
-        self.LMan.Create_Project_Folders(str(self.le.text()))
-        self.le.clear()
+        self.proj_cb.currentIndexChanged.connect(self.Update_Proj)
+        self.episode_cb.currentIndexChanged.connect(self.Update_Episode)
+
+    #======= DISPLAY =================================
+
+    def Update_Proj(self):
+        if (self.proj_cb.currentText() == self.create_proj):
+            msg = 'What would you like to title the new PROJECT?'
+            text_grp = QtGui.QInputDialog.getText(self, 'Title New PROJECT', msg)
+            if text_grp[0] and text_grp[1]:
+                self.LMan.Create_Proj('_' + text_grp[0])
+                self.Populate_Proj_CB()
+        self.Populate_Episode_CB()
+
+    def Update_Episode(self):
+        if (self.episode_cb.currentText() == self.create_episode):
+            msg = 'What would you like to title the new EPISODE?'
+            text_grp = QtGui.QInputDialog.getText(self, 'Title New EPISODE',
+                        msg)
+            if text_grp[0] and text_grp[1]:
+                self.LMan.Create_Episode(self.Get_Proj(), text_grp[0])
+                self.Populate_Episode_CB()
+
+    def Populate_Proj_CB(self):
+        self.proj_cb.clear()
+        self.proj_cb.addItems(self.LMan.Get_Projs())
+        self.proj_cb.addItem('Create New Proj...')
+
+    def Populate_Episode_CB(self):
+        self.episode_cb.clear()
+        if self.proj_cb.count():
+            self.episode_cb.addItems(self.LMan.Get_Episodes(self.proj_cb.currentText()))
+            self.episode_cb.addItem('Create New Episode...')
+
+    def Get_Proj(self):
+        return self.proj_cb.currentText()
+
+    def Get_Episode(self):
+        return self.episode_cb.currentText()
+
+    #======= BUTTONS =================================
 
     def Open_Outline_File(self):
-        self.LMan.Open_Outline_File()
+        self.LMan.Open_Outline_File(self.Get_Proj(), self.Get_Episode())
 
     def Open_Premiere_File(self):
-        self.LMan.Open_Premiere_File()
+        self.LMan.Open_Premiere_File(self.Get_Proj(), self.Get_Episode())
 
     def Open_PS_File(self):
-        self.LMan.Open_PS_File()
+        self.LMan.Open_PS_File(self.Get_Proj(), self.Get_Episode())
 
     def Open_Capture_Folder(self):
         self.LMan.Open_Capture_Folder()
 
     def Open_Project_Folder(self):
-        self.LMan.Open_Project_Folder()
+        self.LMan.Open_Project_Folder(self.Get_Proj(), self.Get_Episode())
 
     def Open_Cpp_Exercises(self):
-        self.LMan.Open_Cpp_Exercises()
+        self.LMan.Open_Cpp_Exercises(self.Get_Proj(), self.Get_Episode())
 
     def Clean_Github(self):
-        CG.clean_Github()
+        self.LMan.Clean_Github()
+
 
 
 
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
     ex = LLCPP_Manager_UI()
-    ex.move(2630,1170)
+    ex.move(2630,1140)
     sys.exit(app.exec_())
