@@ -4,7 +4,7 @@ from os.path import isdir, join, exists, isfile
 import re, os, shutil
 
 ##==================================================================
-class LLCPP_Manager:
+class Project_Manager:
     def __init__(self):
         self.premiere_Exe = os.path.join(os.environ['ADOBE_PREMIERE'], 'Adobe Premiere Pro.exe')
         self.writer_Exe = os.path.join(os.environ['OPEN_OFFICE'], 'program\\swriter.exe')

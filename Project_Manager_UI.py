@@ -1,13 +1,12 @@
 
-from PySide import QtGui
-import sys, os
-import LLCPP_Manager as LM
+from PySide import QtGui, QtCore
+import sys, os, Project_Manager
 
 ##==================================================================
 
-class LLCPP_Manager_UI(QtGui.QWidget):
+class Project_Manager_UI(QtGui.QWidget):
     def __init__(self):
-        super(LLCPP_Manager_UI, self).__init__()
+        super(Project_Manager_UI, self).__init__()
         adobe = os.environ['ADOBE_AFTER_EFFECTS']
         of = os.environ['OPEN_OFFICE']
         icons = QtGui.QFileIconProvider()
@@ -22,11 +21,24 @@ class LLCPP_Manager_UI(QtGui.QWidget):
         self.fo_icon = icons.icon(icons.Folder)
         self.fi_icon = icons.icon(icons.File)
         self.trash_icon = icons.icon(icons.Trashcan)
-        self.LMan = LM.LLCPP_Manager()
+        self.ProjMan = Project_Manager.Project_Manager()
+        self.settings = QtCore.QSettings('TPX', 'Project Manager')
+        self.style = '''
+        QWidget{color: white; background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1,
+                                 stop: 0 #052e32, stop: 0.25 #030f00,
+                                 stop: 0.75 #030f00, stop: 1 #382213)} 
+        QComboBox{background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0,
+                                 stop: 0 #00351d, stop: 0.25 #002204,
+                                 stop: 0.75 #002204, stop: 1 #00351d);
+                color: white}
+        QPushButton{ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0,
+                                 stop: 0 #00351d, stop: 0.25 #002204,
+                                 stop: 0.75 #002204, stop: 1 #00351d);}
+        QGroupBox{ background-color: rgba(0,0,0,0)}
+        '''
 
         self.Setup()
-        self.Populate_Proj_CB()
-        self.Populate_Episode_CB()
+        self.Load_Settings()
         self.Setup_Connections()
 
     #======= SETUP UI =================================
@@ -42,8 +54,9 @@ class LLCPP_Manager_UI(QtGui.QWidget):
 
         self.setWindowIcon(QtGui.QIcon(self.tool_icon))
         self.setLayout(v_layout)
-        self.setWindowTitle('Badass LLC++ Tool')
+        self.setWindowTitle('Badass Project Manager')
         self.resize(350, 10)
+        self.setStyleSheet(self.style)
         self.show()
 
     def Setup_Proj_GB(self):
@@ -116,8 +129,10 @@ class LLCPP_Manager_UI(QtGui.QWidget):
             msg = 'What would you like to title the new PROJECT?'
             text_grp = QtGui.QInputDialog.getText(self, 'Title New PROJECT', msg)
             if text_grp[0] and text_grp[1]:
-                self.LMan.Create_Proj('_' + text_grp[0])
+                self.ProjMan.Create_Proj('_' + text_grp[0])
                 self.Populate_Proj_CB()
+        else:
+            self.Store_Settings()
         self.Populate_Episode_CB()
 
     def Update_Episode(self):
@@ -126,18 +141,20 @@ class LLCPP_Manager_UI(QtGui.QWidget):
             text_grp = QtGui.QInputDialog.getText(self, 'Title New EPISODE',
                         msg)
             if text_grp[0] and text_grp[1]:
-                self.LMan.Create_Episode(self.Get_Proj(), text_grp[0])
+                self.ProjMan.Create_Episode(self.Get_Proj(), text_grp[0])
                 self.Populate_Episode_CB()
+        else:
+            self.Store_Settings()
 
     def Populate_Proj_CB(self):
         self.proj_cb.clear()
-        self.proj_cb.addItems(self.LMan.Get_Projs())
+        self.proj_cb.addItems(self.ProjMan.Get_Projs())
         self.proj_cb.addItem('Create New Proj...')
 
     def Populate_Episode_CB(self):
         self.episode_cb.clear()
         if self.proj_cb.count():
-            self.episode_cb.addItems(self.LMan.Get_Episodes(self.proj_cb.currentText()))
+            self.episode_cb.addItems(self.ProjMan.Get_Episodes(self.proj_cb.currentText()))
             self.episode_cb.addItem('Create New Episode...')
 
     def Get_Proj(self):
@@ -149,31 +166,39 @@ class LLCPP_Manager_UI(QtGui.QWidget):
     #======= BUTTONS =================================
 
     def Open_Outline_File(self):
-        self.LMan.Open_Outline_File(self.Get_Proj(), self.Get_Episode())
+        self.ProjMan.Open_Outline_File(self.Get_Proj(), self.Get_Episode())
 
     def Open_Premiere_File(self):
-        self.LMan.Open_Premiere_File(self.Get_Proj(), self.Get_Episode())
+        self.ProjMan.Open_Premiere_File(self.Get_Proj(), self.Get_Episode())
 
     def Open_PS_File(self):
-        self.LMan.Open_PS_File(self.Get_Proj(), self.Get_Episode())
+        self.ProjMan.Open_PS_File(self.Get_Proj(), self.Get_Episode())
 
     def Open_Capture_Folder(self):
-        self.LMan.Open_Capture_Folder()
+        self.ProjMan.Open_Capture_Folder()
 
     def Open_Project_Folder(self):
-        self.LMan.Open_Project_Folder(self.Get_Proj(), self.Get_Episode())
+        self.ProjMan.Open_Project_Folder(self.Get_Proj(), self.Get_Episode())
 
     def Open_Cpp_Exercises(self):
-        self.LMan.Open_Cpp_Exercises(self.Get_Proj(), self.Get_Episode())
+        self.ProjMan.Open_Cpp_Exercises(self.Get_Proj(), self.Get_Episode())
 
     def Clean_Github(self):
-        self.LMan.Clean_Github()
+        self.ProjMan.Clean_Github()
 
+    def Store_Settings(self):
+        self.settings.setValue('Project', self.proj_cb.currentIndex())
+        self.settings.setValue('Episode', self.episode_cb.currentIndex())
 
+    def Load_Settings(self):
+        self.Populate_Proj_CB()
+        self.proj_cb.setCurrentIndex(self.settings.value('Project'))
+        self.Populate_Episode_CB()
+        self.episode_cb.setCurrentIndex(self.settings.value('Episode'))
 
 
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
-    ex = LLCPP_Manager_UI()
+    ex = Project_Manager_UI()
     ex.move(2630,1140)
     sys.exit(app.exec_())
