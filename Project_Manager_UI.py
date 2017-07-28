@@ -8,21 +8,21 @@ class Project_Manager_UI(QtGui.QWidget):
     def __init__(self):
         super(Project_Manager_UI, self).__init__()
         adobe = os.environ['ADOBE_AFTER_EFFECTS']
-        of = os.environ['OPEN_OFFICE']
         icons = QtGui.QFileIconProvider()
-        self.create_proj = 'Create New Proj...'
-        self.create_episode = 'Create New Episode...'
+        self.create_project_txt = 'Create New Proj...'
+        self.populating = False
 
         self.ps_icon = os.path.join(adobe, r'Support Files\com.adobe.ccx.start\images\products\product-rune-PHXS.png')
         self.pr_icon = os.path.join(adobe, r'Support Files\com.adobe.ccx.start\images\products\product-rune-PPRO.png')
         self.ca_icon = os.path.join(adobe, r'Support Files\PNG\SP_VideoColored_64x64_N_D.png')
-        self.of_icon = os.path.join(of, r'program\logo.png')
+        self.of_icon = os.path.join(os.environ['OPEN_OFFICE'], r'program\logo.png')
         self.tool_icon = os.path.join(adobe, r'Support Files\PNG\SP_AddedByOthers_17x15_N.png')
         self.fo_icon = icons.icon(icons.Folder)
         self.fi_icon = icons.icon(icons.File)
         self.trash_icon = icons.icon(icons.Trashcan)
-        self.ProjMan = Project_Manager.Project_Manager()
+        self.project_manager = Project_Manager.Project_Manager()
         self.settings = QtCore.QSettings('TPX', 'Project Manager')
+
         self.style = '''
         QWidget{color: white; background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1,
                                  stop: 0 #052e32, stop: 0.25 #030f00,
@@ -44,6 +44,7 @@ class Project_Manager_UI(QtGui.QWidget):
     #======= SETUP UI =================================
 
     def Setup(self):
+        ''' Create Main Widget's Layout'''
         v_layout = QtGui.QVBoxLayout()
         h_layout = QtGui.QHBoxLayout()
         h_layout.addWidget(self.Setup_Proj_GB())
@@ -60,6 +61,7 @@ class Project_Manager_UI(QtGui.QWidget):
         self.show()
 
     def Setup_Proj_GB(self):
+        ''' Create Project Groupbox and Dropdown '''
         g_box = QtGui.QGroupBox('Project')
         h_layout = QtGui.QHBoxLayout()
         self.proj_cb = QtGui.QComboBox()
@@ -68,6 +70,7 @@ class Project_Manager_UI(QtGui.QWidget):
         return g_box
 
     def Setup_Episode_GB(self):
+        ''' Create Episode Groupbox and Dropdown '''
         g_box = QtGui.QGroupBox('Episode')
         h_layout = QtGui.QHBoxLayout()
         self.episode_cb = QtGui.QComboBox()
@@ -76,7 +79,8 @@ class Project_Manager_UI(QtGui.QWidget):
         return g_box
 
     def Setup_Btn_GB(self):
-        self.gb = QtGui.QGroupBox('Open Latest Files...', self)
+        ''' Create Buttons which open episode files in respective program '''
+        gb = QtGui.QGroupBox('Open Latest Files...', self)
 
         v_layout2 = QtGui.QVBoxLayout()
         h_layout2 = QtGui.QHBoxLayout()
@@ -98,64 +102,62 @@ class Project_Manager_UI(QtGui.QWidget):
         self.project_folder_btn = QtGui.QPushButton(self.fo_icon, 'Project Folder', self)
         h_layout4.addWidget(self.project_folder_btn)
 
-        self.exercises_btn = QtGui.QPushButton(self.fi_icon, 'C++ Exercises.txt', self)
-        h_layout4.addWidget(self.exercises_btn)
-
-        self.clean_github_btn = QtGui.QPushButton(self.trash_icon, 'Clean Github Folder', self)
-        
         v_layout2.addLayout(h_layout2)
         v_layout2.addLayout(h_layout3)
         v_layout2.addLayout(h_layout4)
-        v_layout2.addWidget(self.clean_github_btn)
 
-        self.gb.setLayout(v_layout2)
-        return self.gb
+        gb.setLayout(v_layout2)
+        return gb
 
     def Setup_Connections(self):
+        ''' Connect button functionality to backend implementation '''
         self.outline_btn.clicked.connect(self.Open_Outline_File)
         self.premiere_btn.clicked.connect(self.Open_Premiere_File)
         self.photoshop_btn.clicked.connect(self.Open_PS_File)
         self.capture_folder_btn.clicked.connect(self.Open_Capture_Folder)
         self.project_folder_btn.clicked.connect(self.Open_Project_Folder)
-        self.exercises_btn.clicked.connect(self.Open_Cpp_Exercises)
-        self.clean_github_btn.clicked.connect(self.Clean_Github)
-        self.proj_cb.currentIndexChanged.connect(self.Update_Proj)
+        self.proj_cb.currentIndexChanged.connect(self.Update_Project)
         self.episode_cb.currentIndexChanged.connect(self.Update_Episode)
 
     #======= DISPLAY =================================
 
-    def Update_Proj(self):
-        if (self.proj_cb.currentText() == self.create_proj):
-            msg = 'What would you like to title the new PROJECT?'
-            text_grp = QtGui.QInputDialog.getText(self, 'Title New PROJECT', msg)
-            if text_grp[0] and text_grp[1]:
-                self.ProjMan.Create_Proj('_' + text_grp[0])
+    def Update_Project(self):
+        ''' On project change, create new project or store settings, and populate episodes '''
+        if (self.proj_cb.currentText() == self.create_project_txt):
+            text_grp = QtGui.QInputDialog.getText(self, 'Title New PROJECT', 
+                        'What would you like to title the new PROJECT?')
+            if all(text_grp):
+                self.project_manager.Create_Proj('_' + text_grp[0])
                 self.Populate_Proj_CB()
-        else:
-            self.Store_Settings()
+        self.Store_Settings()
         self.Populate_Episode_CB()
 
     def Update_Episode(self):
-        if (self.episode_cb.currentText() == self.create_episode):
-            msg = 'What would you like to title the new EPISODE?'
+        ''' On episode change, create new episode, store settings '''
+        if (self.episode_cb.currentIndex() == 0) and not self.populating:
             text_grp = QtGui.QInputDialog.getText(self, 'Title New EPISODE',
-                        msg)
-            if text_grp[0] and text_grp[1]:
-                self.ProjMan.Create_Episode(self.Get_Proj(), text_grp[0])
+                        'What would you like to title the new EPISODE?')
+            if all(text_grp):
+                self.project_manager.Create_Episode(self.Get_Proj(), text_grp[0])
                 self.Populate_Episode_CB()
-        else:
-            self.Store_Settings()
+            self.episode_cb.setCurrentIndex(1)
+        self.Store_Settings()
 
     def Populate_Proj_CB(self):
+        ''' Populate project dropdown '''
         self.proj_cb.clear()
-        self.proj_cb.addItems(self.ProjMan.Get_Projs())
+        self.proj_cb.addItems(self.project_manager.Get_Projs())
         self.proj_cb.addItem('Create New Proj...')
 
     def Populate_Episode_CB(self):
+        ''' Populate episode dropdown '''
+        self.populating = True
         self.episode_cb.clear()
-        if self.proj_cb.count():
-            self.episode_cb.addItems(self.ProjMan.Get_Episodes(self.proj_cb.currentText()))
-            self.episode_cb.addItem('Create New Episode...')
+        self.episode_cb.addItem('Create New Episode...')
+        self.episode_cb.addItems(self.project_manager.Get_Episodes(self.proj_cb.currentText()))
+        self.episode_cb.setCurrentIndex(1)
+
+        self.populating = False
 
     def Get_Proj(self):
         return self.proj_cb.currentText()
@@ -166,31 +168,27 @@ class Project_Manager_UI(QtGui.QWidget):
     #======= BUTTONS =================================
 
     def Open_Outline_File(self):
-        self.ProjMan.Open_Outline_File(self.Get_Proj(), self.Get_Episode())
+        self.project_manager.Open_Outline_File(self.Get_Proj(), self.Get_Episode())
 
     def Open_Premiere_File(self):
-        self.ProjMan.Open_Premiere_File(self.Get_Proj(), self.Get_Episode())
+        self.project_manager.Open_Premiere_File(self.Get_Proj(), self.Get_Episode())
 
     def Open_PS_File(self):
-        self.ProjMan.Open_PS_File(self.Get_Proj(), self.Get_Episode())
+        self.project_manager.Open_PS_File(self.Get_Proj(), self.Get_Episode())
 
     def Open_Capture_Folder(self):
-        self.ProjMan.Open_Capture_Folder()
+        self.project_manager.Open_Capture_Folder()
 
     def Open_Project_Folder(self):
-        self.ProjMan.Open_Project_Folder(self.Get_Proj(), self.Get_Episode())
-
-    def Open_Cpp_Exercises(self):
-        self.ProjMan.Open_Cpp_Exercises(self.Get_Proj(), self.Get_Episode())
-
-    def Clean_Github(self):
-        self.ProjMan.Clean_Github()
+        self.project_manager.Open_Project_Folder(self.Get_Proj(), self.Get_Episode())
 
     def Store_Settings(self):
+        ''' Save current pyside setting '''
         self.settings.setValue('Project', self.proj_cb.currentIndex())
         self.settings.setValue('Episode', self.episode_cb.currentIndex())
 
     def Load_Settings(self):
+        ''' Load pyside settings from previous session '''
         self.Populate_Proj_CB()
         self.proj_cb.setCurrentIndex(self.settings.value('Project'))
         self.Populate_Episode_CB()
@@ -200,5 +198,5 @@ class Project_Manager_UI(QtGui.QWidget):
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
     ex = Project_Manager_UI()
-    ex.move(2630,1140)
+    ex.move(2630,1180)
     sys.exit(app.exec_())
