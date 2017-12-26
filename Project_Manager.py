@@ -36,7 +36,8 @@ class Project_Manager:
         episode_folder = self.Get_Episode_Path(proj, episode)
         for f in os.listdir(join(episode_folder, 'Premiere')):
             if '.prproj' in f:
-                return Popen(self.premiere_exe + ' ' + join(join(episode_folder, 'Premiere'), f))
+                p = join(join(episode_folder, 'Premiere'), f)
+                return Popen(self.premiere_exe + ' ' + p)
                 
     def Open_PS_File(self, proj, episode):
         episode_folder = self.Get_Episode_Path(proj, episode)
@@ -57,28 +58,31 @@ class Project_Manager:
     #======= CREATE NEW EPISODES ==========================
 
     def Create_Episode(self, proj, desc):
-        num = int(self.Get_Episodes(proj)[0][0:3]) + 1
-        episode = '%03d_%s' % (num, desc)
-        template = join(self.Get_Episode_Path(proj,'000_OTHER_STUFF'), '0000_TEMPLATE_IGNORE')
+        episode_num = '%03d' % (int(self.Get_Episodes(proj)[0][0:3]) + 1)
+        episode = '{}_{}'.format(episode_num, desc)
+        p = self.Get_Episode_Path(proj,'000_OTHER_STUFF')
+        template = join(p, '0000_TEMPLATE_IGNORE')
         episode_path = self.Get_Episode_Path(proj, episode)
         shutil.copytree(template, episode_path)
 
-        self._Renamer(episode_path, episode)
+        self._Renamer(episode_path, episode_num)
+        return episode
 
-    def _Renamer(self, episode_path, episode):
+    def _Renamer(self, episode_path, episode_num):
         for f in os.listdir(episode_path):
             path = join(episode_path,f)
             if isdir(path):
-                x = self._Renamer(path, episode)
+                x = self._Renamer(path, episode_num)
             if '000' in f:
-                os.rename(path, join(episode_path,f.replace('000', episode)))
+                os.rename(path, join(episode_path,f.replace('000', episode_num)))
 
     #======= CREATE PROJ ==========================
 
     def Create_Proj(self, proj):
         new_template_path = join(join(self.projs_root, proj), '000_OTHER_STUFF')
         if not exists(new_template_path):
-            llcpp_template = join(join(self.projs_root, '_LLCPP'), '000_OTHER_STUFF')
+            p = join(self.projs_root, '_LLCPP')
+            llcpp_template = join(p, '000_OTHER_STUFF')
             self._Create_Template_Folders(llcpp_template, new_template_path)
 
     def _Create_Template_Folders(self, source_path, target_path):
@@ -92,9 +96,6 @@ class Project_Manager:
         for f in copy_folders:
             shutil.copytree(join(source_path, f), join(target_path, f))
         for f in create_folders:
-            self._Create_Path(join(target_path, f))
+            os.makedirs(join(target_path, f))
 
-    def _Create_Path(self, path):
-        if not exists(path):
-            os.makedirs(path)
 
