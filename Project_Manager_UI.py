@@ -4,7 +4,7 @@ import sys, os, Project_Manager
 
 
 _ADOBE_IMGS1 = r'Support Files\com.adobe.ccx.start\images\products\\'
-_STYLE = '''
+_CSS_STYLE = '''
     QWidget{color: white; background-color: qlineargradient(
         x1: 0, y1: 0, x2: 1, y2: 1,
         stop: 0 #052e32, stop: 0.25 #030f00,
@@ -57,7 +57,7 @@ class Project_Manager_UI(QtGui.QWidget):
 
         self.setWindowIcon(QtGui.QIcon(self.tool_icon))
         self.setWindowTitle('Badass Project Manager')
-        self.setStyleSheet(_STYLE)
+        self.setStyleSheet(_CSS_STYLE)
         self.show()
 
     def Setup_Proj_GB(self):
@@ -96,7 +96,7 @@ class Project_Manager_UI(QtGui.QWidget):
         self.photoshop_btn = QtGui.QPushButton(QtGui.QIcon(self.ps_icon), 'Photoshop')
         self.capture_folder_btn = QtGui.QPushButton(QtGui.QIcon(self.ca_icon),'Capture Folder')
         self.project_folder_btn = QtGui.QPushButton(self.fo_icon, 'Project Folder')
-        self.xsplit_btn = QtGui.QPushButton(QtGui.QIcon(self.xs_icon), 'Project Folder')
+        self.xsplit_btn = QtGui.QPushButton(QtGui.QIcon(self.xs_icon), 'XSplit')
 
         h_layout2.addWidget(self.outline_btn)
         h_layout2.addWidget(self.premiere_btn)
