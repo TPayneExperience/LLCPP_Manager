@@ -4,12 +4,22 @@ import re
 import shutil
 from subprocess import Popen
 
+## Example Env Vars:
+# after effects = C:\Program Files\Adobe\Adobe After Effects CC 2018\
+# capture = C:\Users\crash\Videos\XSplit_Videos\
+# sublime = D:\Program Files\Sublime Text 3\
+# TPX = D:\TPX\
+# xsplit = C:\Program Files (x86)\SplitmediaLabs\XSplit Broadcaster\x64\
 
 class Project_Manager:
     def __init__(self):
         self.premiere_exe = os.path.join(
             os.environ['ADOBE_PREMIERE'],
             'Adobe Premiere Pro.exe'
+            )
+        self.after_effects_exe = os.path.join(
+            os.environ['ADOBE_AFTER_EFFECTS'],
+            'Support Files\\AfterFX.exe'
             )
         self.writer_exe = os.path.join(
             os.environ['OPEN_OFFICE'],
@@ -22,10 +32,6 @@ class Project_Manager:
         self.sublime_exe = os.path.join(
             os.environ['SUBLIME'],
             'sublime_text.exe'
-            )
-        self.xsplit_exe = os.path.join(
-            os.environ['XSPLIT'],
-            'XSplit.Core.exe'
             )
         self.projs_root = os.environ['TPX_PROJECTS']
         self.capture_footage = os.environ['CAPTURE']
@@ -43,31 +49,54 @@ class Project_Manager:
 
     #======= OPEN PROGRAMS =================================
 
-    def Open_Outline_File(self, proj, episode):
+    def Get_Outline_File(self, proj, episode):
         episode_folder = self.Get_Episode_Path(proj, episode)
         for f in os.listdir(episode_folder):
             if '.odt' in f:
-                return Popen(self.writer_exe + ' ' + os.path.join(episode_folder, f))
-                
-    def Open_Premiere_File(self, proj, episode):
-        episode_folder = self.Get_Episode_Path(proj, episode)
-        for f in os.listdir(os.path.join(episode_folder, 'Premiere')):
-            if '.prproj' in f:
-                p = os.path.join(os.path.join(episode_folder, 'Premiere'), f)
-                return Popen(self.premiere_exe + ' ' + p)
-                
-    def Open_PS_File(self, proj, episode):
-        episode_folder = self.Get_Episode_Path(proj, episode)
-        psd_files = []
-        for f in os.listdir(os.path.join(episode_folder, 'Images')):
-            temp = re.match('\d{2}\.psd', f)
-            if temp:
-                psd_files += [temp.string]
-        file_path = os.path.join(os.path.join(episode_folder, 'Images'), psd_files[-1])
-        Popen(self.ps_exe + ' ' + file_path)
+                return os.path.join(episode_folder, f)
+        return ''
 
-    def Open_XSplit(self):
-        Popen(self.xsplit_exe)
+    def Get_Premiere_File(self, proj, episode):
+        episode_folder = self.Get_Episode_Path(proj, episode)
+        pr_folder = os.path.join(episode_folder, 'Premiere')
+        for f in os.listdir(pr_folder):
+            if '.prproj' in f:
+                return os.path.join(pr_folder, f)
+        return ''
+
+    def Get_After_Effects_File(self, proj, episode):
+        episode_folder = self.Get_Episode_Path(proj, episode)
+        ae_folder = os.path.join(episode_folder, 'AE')
+        if os.path.isdir(ae_folder):
+            for f in os.listdir(ae_folder):
+                if '.aep' in f:
+                    return os.path.join(ae_folder, f)
+        return ''
+                
+    def Get_Photoshop_File(self, proj, episode):
+        episode_folder = self.Get_Episode_Path(proj, episode)
+        ps_folder = os.path.join(episode_folder, 'Images')
+        if os.path.isdir(ps_folder):
+            psd_files = []
+            for f in os.listdir(ps_folder):
+                temp = re.match('\d{2}\.psd', f)
+                if temp:
+                    psd_files += [temp.string]
+            if psd_files:
+                return os.path.join(ps_folder, psd_files[-1])
+        return ''
+
+    def Open_Outline_File(self, file_path):
+        return Popen(self.writer_exe + ' ' + file_path)
+
+    def Open_Premiere_File(self, file_path):
+        return Popen(self.premiere_exe + ' ' + file_path)
+
+    def Open_After_Effects_File(self, file_path):
+        return Popen(self.after_effects_exe + ' ' + file_path)
+
+    def Open_Photoshop_File(self, file_path):
+        return Popen(self.ps_exe + ' ' + file_path)
 
     def Open_Capture_Folder(self):
         Popen('explorer ' + self.capture_footage)

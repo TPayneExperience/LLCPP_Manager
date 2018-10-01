@@ -1,7 +1,12 @@
 
-from PySide import QtGui, QtCore
-import sys, os, Project_Manager
+import os
+import sys
 
+from PySide import QtGui, QtCore
+
+import Project_Manager
+
+__author__ = 'TPayne'
 
 _ADOBE_IMGS1 = r'Support Files\com.adobe.ccx.start\images\products\\'
 _CSS_STYLE = '''
@@ -30,18 +35,21 @@ class Project_Manager_UI(QtGui.QWidget):
         self.tool_icon = os.path.join(adobe, r'Support Files\PNG\SP_AddedByOthers_17x15_N.png')
         self.ps_icon = os.path.join(adobe, _ADOBE_IMGS1 + 'product-rune-PHXS.png')
         self.pr_icon = os.path.join(adobe, _ADOBE_IMGS1 + 'product-rune-PPRO.png')
+        self.ae_icon = os.path.join(adobe, _ADOBE_IMGS1 + 'product-rune-AEFT.png')
         self.ca_icon = os.path.join(adobe, r'Support Files\PNG\SP_VideoColored_64x64_N_D.png')
         self.of_icon = os.path.join(os.environ['OPEN_OFFICE'], r'program\logo.png')
         self.fo_icon = icons.icon(icons.Folder)
-        self.xs_icon = os.path.join(os.environ['XSPLIT'], 'watermark100.png')
         self.project_manager = Project_Manager.Project_Manager()
         self.settings = QtCore.QSettings('TPX', 'Project Manager')
+        self.projOrder = []
+        self.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.WindowTitleHint)
 
         self.Setup()
         self.Populate_Proj_CB()
         self.Populate_Episode_CB()
         self.Load_Settings()
         self.Setup_Connections()
+        self.Update_Buttons()
 
     #======= SETUP UI =================================
 
@@ -92,18 +100,18 @@ class Project_Manager_UI(QtGui.QWidget):
         h_layout4 = QtGui.QHBoxLayout()
 
         self.outline_btn = QtGui.QPushButton(QtGui.QIcon(self.of_icon), 'Outline')
-        self.premiere_btn = QtGui.QPushButton(QtGui.QIcon(self.pr_icon), 'Premiere')
-        self.photoshop_btn = QtGui.QPushButton(QtGui.QIcon(self.ps_icon), 'Photoshop')
-        self.capture_folder_btn = QtGui.QPushButton(QtGui.QIcon(self.ca_icon),'Capture Folder')
+        self.after_effects_btn = QtGui.QPushButton(QtGui.QIcon(self.ae_icon), 'After Effects')
         self.project_folder_btn = QtGui.QPushButton(self.fo_icon, 'Project Folder')
-        self.xsplit_btn = QtGui.QPushButton(QtGui.QIcon(self.xs_icon), 'XSplit')
-
+        self.premiere_btn = QtGui.QPushButton(QtGui.QIcon(self.pr_icon), 'Premiere')
+        self.capture_folder_btn = QtGui.QPushButton(QtGui.QIcon(self.ca_icon),'Capture Folder')
+        self.photoshop_btn = QtGui.QPushButton(QtGui.QIcon(self.ps_icon), 'Photoshop')
+        
         h_layout2.addWidget(self.outline_btn)
-        h_layout2.addWidget(self.premiere_btn)
-        h_layout3.addWidget(self.photoshop_btn)
-        h_layout3.addWidget(self.xsplit_btn)
+        h_layout2.addWidget(self.after_effects_btn)
+        h_layout3.addWidget(self.project_folder_btn)
+        h_layout3.addWidget(self.premiere_btn)
         h_layout4.addWidget(self.capture_folder_btn)
-        h_layout4.addWidget(self.project_folder_btn)
+        h_layout4.addWidget(self.photoshop_btn)
 
         v_layout2.addLayout(h_layout2)
         v_layout2.addLayout(h_layout3)
@@ -117,13 +125,13 @@ class Project_Manager_UI(QtGui.QWidget):
 
         self.outline_btn.clicked.connect(self.Open_Outline_File)
         self.premiere_btn.clicked.connect(self.Open_Premiere_File)
-        self.photoshop_btn.clicked.connect(self.Open_PS_File)
-        self.xsplit_btn.clicked.connect(self.project_manager.Open_XSplit)
+        self.after_effects_btn.clicked.connect(self.Open_After_Effects_File)
+        self.photoshop_btn.clicked.connect(self.Open_Photoshop_File)
         self.capture_folder_btn.clicked.connect(self.Open_Capture_Folder)
         self.project_folder_btn.clicked.connect(self.Open_Project_Folder)
 
         self.proj_cb.currentIndexChanged.connect(self.Update_Episodes)
-        self.episode_cb.currentIndexChanged.connect(self.Store_Settings)
+        self.episode_cb.currentIndexChanged.connect(self.Update_Buttons)
 
     #======= DISPLAY =================================
 
@@ -154,13 +162,43 @@ class Project_Manager_UI(QtGui.QWidget):
 
     def Update_Episodes(self):
         ''' On project change, create new project or store settings, and populate episodes '''
+        proj = self.Get_Proj()
+        if proj in self.projOrder:
+            self.projOrder.remove(proj)
+        self.projOrder.insert(0, proj)
+
+        self.proj_cb.currentIndexChanged.disconnect(self.Update_Episodes)
+        self.Populate_Proj_CB()
+        self.proj_cb.currentIndexChanged.connect(self.Update_Episodes)
         self.Populate_Episode_CB()
-        self.Store_Settings()
+
+    def Update_Buttons(self):
+        proj = self.Get_Proj()
+        epi = self.Get_Episode()
+        ol = self.project_manager.Get_Outline_File(proj, epi)
+        ae = self.project_manager.Get_After_Effects_File(proj, epi)
+        pr = self.project_manager.Get_Premiere_File(proj, epi)
+        ps = self.project_manager.Get_Photoshop_File(proj, epi)
+
+        self.outline_btn.setToolTip(ol)
+        self.outline_btn.setEnabled(bool(ol))
+        self.after_effects_btn.setToolTip(ae)
+        self.after_effects_btn.setEnabled(bool(ae))
+        self.premiere_btn.setToolTip(pr)
+        self.premiere_btn.setEnabled(bool(pr))
+        self.photoshop_btn.setToolTip(ps)
+        self.photoshop_btn.setEnabled(bool(ps))
+        self.Save_Settings()
 
     def Populate_Proj_CB(self):
         ''' Populate project dropdown '''
         self.proj_cb.clear()
-        self.proj_cb.addItems(self.project_manager.Get_Projs())
+        projs = self.project_manager.Get_Projs()
+        for proj in self.projOrder[::-1]:
+            if proj in projs:
+                projs.remove(proj)
+                projs.insert(0, proj)
+        self.proj_cb.addItems(projs)
 
     def Populate_Episode_CB(self):
         ''' Populate episode dropdown '''
@@ -176,13 +214,20 @@ class Project_Manager_UI(QtGui.QWidget):
     #======= BUTTONS =================================
 
     def Open_Outline_File(self):
-        self.project_manager.Open_Outline_File(self.Get_Proj(), self.Get_Episode())
+        path = self.outline_btn.toolTip()
+        self.project_manager.Open_Outline_File(path)
 
     def Open_Premiere_File(self):
-        self.project_manager.Open_Premiere_File(self.Get_Proj(), self.Get_Episode())
+        path = self.premiere_btn.toolTip()
+        self.project_manager.Open_Premiere_File(path)
 
-    def Open_PS_File(self):
-        self.project_manager.Open_PS_File(self.Get_Proj(), self.Get_Episode())
+    def Open_After_Effects_File(self):
+        path = self.after_effects_btn.toolTip()
+        self.project_manager.Open_After_Effects_File(path)
+
+    def Open_Photoshop_File(self):
+        path = self.photoshop_btn.toolTip()
+        self.project_manager.Open_Photoshop_File(path)
 
     def Open_Capture_Folder(self):
         self.project_manager.Open_Capture_Folder()
@@ -192,26 +237,25 @@ class Project_Manager_UI(QtGui.QWidget):
 
     #======= SETTINGS =================================
 
-    def Store_Settings(self):
+    def Save_Settings(self):
         ''' Save current pyside setting '''
-        self.settings.setValue('Project', self.proj_cb.currentText())
+        self.settings.setValue('ProjectOrder', self.projOrder)
         self.settings.setValue('Episode', self.episode_cb.currentText())
 
     def Load_Settings(self):
         ''' Load pyside settings from previous session '''
-        self.Populate_Proj_CB()
-        self.proj_cb.setCurrentIndex(
-            self.proj_cb.findText(self.settings.value('Project'))
-            )
-        self.Populate_Episode_CB()
-        self.episode_cb.setCurrentIndex(
-            self.episode_cb.findText(self.settings.value('Episode'))
-            )
+        if self.settings:
+            self.projOrder = self.settings.value('ProjectOrder')
+            self.Populate_Proj_CB()
+            self.Populate_Episode_CB()
+            self.episode_cb.setCurrentIndex(
+                self.episode_cb.findText(self.settings.value('Episode'))
+                )
 
 
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
     ex = Project_Manager_UI()
-    ex.move(2600, 1180)
+    ex.move(2605, 1145)
     ex.resize(380, 100)
     sys.exit(app.exec_())
